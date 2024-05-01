@@ -209,9 +209,14 @@ void print_usage(const char *app) {
 void generate_password(const size_t pass_size)
 {
   size_t i = 0;
-  char list[] = "1234567890qwertyuiopasdfghjklzxcvbnm!@#$%^&*()_- +=QWERTYUIOPASDFGHJKLZXCVBNM[]{};:<>,.?|";
+
+  char list[] = "1234567890qwertyuiopasdfghjklzxcvbnm~`! @#$%^&*()_-+={[}]|\\:;\"'<,>.?/QWERTYUIOPASDFGHJKLZXCVBNM";
+
+
   size_t list_len = strlen(list);
-  srand(time(NULL));
+  struct timespec nanos;
+  clock_gettime(CLOCK_MONOTONIC, &nanos);
+  srand(nanos.tv_nsec);
   printf("Generated password: ");
   for(i = 0; i < pass_size; i++) {
     printf("%c", list[rand() % (list_len - 1)]);
