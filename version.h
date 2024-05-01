@@ -3,7 +3,7 @@
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
-#define BUILD_NUMBER 0
+#define BUILD_NUMBER 1
 #define BUILD_DATE "30.04.2024"
 
 #endif /* BEARPSWMNG_VERSION_H */ 

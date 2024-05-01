@@ -1,3 +1,22 @@
+/****************************************************************************
+ * bearpswmng - A password manager application                              *
+ *                                                                          *
+ * Copyright (C) 2024  Sebastian Mihai Ardelean                             *
+ *                                                                          *
+ * This program is free software: you can redistribute it and/or modify     *
+ * it under the terms of the GNU General Public License as published by     *
+ * the Free Software Foundation, either version 3 of the License, or        *
+ * (at your option) any later version.                                      *
+ *                                                                          *
+ * This program is distributed in the hope that it will be useful,          *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+ * GNU General Public License for more details.                             *
+ *                                                                          *
+ * You should have received a copy of the GNU General Public License        *
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.   *
+ ****************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -12,6 +31,17 @@
 #include <pwd.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include "version.h"
+
+
+#define STR(s) #s
+#define XSTR(s) STR(s)
+#define PROGRAM_NAME "bearpswmng"
+#define VERSION XSTR(MAJOR_VERSION) "." XSTR(MINOR_VERSION) "." XSTR(BUILD_NUMBER) "-" BUILD_DATE
+#define AUTHORS "Sebastian M. Ardelean"
+
+
+
 
 #define MAX_FILE_NAME_SIZE 256u
 #define PASSMNG_DIR_PATH_SIZE 512u
@@ -150,6 +180,7 @@ void cleanup()
 }
 
 void print_usage(const char *app) {
+  printf("\n\n\t\t%s version %s\n\n", PROGRAM_NAME, VERSION);
   printf("Usage: %s [options]\n", app);
   printf("Options:\n");
   printf("  --list                   List all entries\n");
