@@ -59,20 +59,18 @@ function extract_version() {                                    #function has no
     
     #increment version logic
     BUILD_NUMBER=`expr $BUILD_NUMBER + 1`
-    if [ $BUILD_NUMBER -eq 9 ]; then
+    if [ $BUILD_NUMBER -ge 9 ]; then
         MINOR_VERSION=`expr $MINOR_VERSION + 1`
         BUILD_NUMBER=0
         
     fi
     
-    if [ $MINOR_VERSION -eq 9 ]; then
+    if [ $MINOR_VERSION -ge 9 ]; then
         MINOR_VERSION=0
         MAJOR_VERSION=`expr $MAJOR_VERSION + 1`
     fi
     
-    if [ $MAJOR_VERSION -eq 256 ]; then
-        MAJOR_VERSION=0
-    fi
+
     
 }
 
