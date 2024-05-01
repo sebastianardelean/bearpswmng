@@ -128,7 +128,6 @@ int main(int argc, char **argv)
       show_all_entries();
       break;
     case 's':
-      printf("Show details of entry: %lu\n", strtoul(optarg, NULL, 10));
       show_entry(strtoul(optarg, NULL, 10));
       break;
     case 'a': {
@@ -225,12 +224,12 @@ int show_entry(const size_t entry_index)
 
 
 void decrypt_file(const char *infile)
-{//TODO: I don't like fgets
+{
   FILE *fp;
   char proc_output[MAX_PROC_OUTPUT];
   char command[MAX_COMMAND_SIZE] = {0};
 
-  snprintf(command, MAX_COMMAND_SIZE, "gpg -d %s",infile);
+  snprintf(command, MAX_COMMAND_SIZE, "gpg -q -d %s",infile);
     
   fp = popen(command, "r");
   if (fp == NULL) {
@@ -247,7 +246,7 @@ void decrypt_file(const char *infile)
 }
 
 void encrypt_file(const char *infile,const char *outfile, const char *recipient)
-{//TODO: I don't like fgets
+{
   FILE *fp;
   char proc_output[MAX_PROC_OUTPUT];
   char command[MAX_COMMAND_SIZE] = {0};
