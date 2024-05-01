@@ -47,12 +47,15 @@
 #define MAX_FILE_NAME_SIZE 256u
 #define PASSMNG_DIR_PATH_SIZE 512u
 
-#define MAX_PASSW_SIZE 2048u
-#define MAX_PROC_OUTPUT 2048u
 
-#define MAX_COMMAND_SIZE 4096u
+#define MAX_PROC_OUTPUT 4096u
+
+#define MAX_LINE_LENGTH 1024u
+
+#define MAX_COMMAND_SIZE 2048u
 
 #define MAX_RECIPIENT_SIZE 256u
+
 #define DEFAULT_GEN_PASS_LEN 10u
 #define PASSMNG_DIR ".bearpswmng"
 
@@ -84,14 +87,13 @@ static int read_directory(const char *path);
 static int create_dir_if_missing(const char *path);
 static bool check_directory_exists(const char *path);
 static int add_entry(const char *group,
-                      const char *file,
-                      const char *password,
-                      const char *recipient);
+                     const char *file,
+                     const char *recipient);
 static int show_entry(const size_t entry_index);
 static int show_all_entries();
 static void generate_password(const size_t pass_size);
 static int create_password_file(const char *file,
-                                 const char *password
+                                 const char *data
                                 );
 static void encrypt_file(const char *infile,
                          const char *outfile,
@@ -162,10 +164,8 @@ int main(int argc, char **argv)
       optind++;
       strncpy(recipient, argv[optind], strlen(argv[optind]));
       optind++;
-      char password[MAX_PASSW_SIZE]={0};
-      printf("Enter the password for %s/%s:\n",group, domain);
-      scanf("%2047s", password);
-      if(add_entry(group, domain, password, recipient)==EXIT_FAILURE) {
+      
+      if(add_entry(group, domain, recipient)==EXIT_FAILURE) {
         cleanup();
         exit(EXIT_FAILURE);
       }
@@ -306,9 +306,11 @@ void encrypt_file(const char *infile,const char *outfile, const char *recipient)
 
 int add_entry(const char *group,
               const char *file,
-              const char *password,
               const char *recipient)
 {
+  char *data = NULL;
+  char line[MAX_LINE_LENGTH] = {0};
+
   char *group_path = malloc((strlen(passmng_dir)+strlen(group)+2) * sizeof(char));
   if (group_path == NULL) {
     fprintf(stderr, "Could not allocate memory for the group %s path", group);
@@ -345,10 +347,30 @@ int add_entry(const char *group,
     return EXIT_FAILURE;
   }
 
-  if (create_password_file(file_path, password) == EXIT_FAILURE) {
+  printf("Input data:\n");
+  size_t data_size = 0;
+  while(fgets(line, MAX_LINE_LENGTH, stdin) != NULL) {
+    char *ptr_line = realloc(data, (data_size+strlen(line)+1)*sizeof(char));
+    if (ptr_line == NULL) {
+      fprintf(stderr, "Could not allocate memory for data input\n");
+      free(file_path);
+      free(group_path);
+      free(outfile);
+      if (data != NULL) {
+        free(data);
+      }
+      return EXIT_FAILURE;
+    }
+    data = ptr_line;
+    strncpy(data+data_size, line, strlen(line)+1);
+    data_size = strlen(data);
+  }
+
+  if (create_password_file(file_path, data) == EXIT_FAILURE) {
     free(file_path);
     free(group_path);
     free(outfile);
+    free(data);
     return EXIT_FAILURE;
   }
 
@@ -359,12 +381,13 @@ int add_entry(const char *group,
   free(file_path);
   free(group_path);
   free(outfile);
+  free(data);
   return EXIT_SUCCESS;
 }
 
 
 int create_password_file(const char *file,
-                          const char *password)
+                          const char *data)
 {
   int fd = -1;
 
@@ -375,7 +398,7 @@ int create_password_file(const char *file,
   }
 
   /*Write the password*/
-  if (write(fd, password, strlen(password)) == -1) {
+  if (write(fd, data, strlen(data)) == -1) {
     fprintf(stderr, "Can't write to file %s - Error %s\n", file, strerror(errno));
     close(fd);
     return EXIT_FAILURE;
@@ -415,6 +438,9 @@ int read_directory(const char *path)
       struct entry_t *ptr = realloc(listed_entries, file_index*sizeof(struct entry_t));
       if (ptr==NULL) {
         fprintf(stderr, "Could not allocate memory");
+        if (listed_entries != NULL) {
+          free(listed_entries);
+        }
         return EXIT_FAILURE;
       }
       listed_entries=ptr;
