@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -52,6 +53,7 @@
 #define MAX_COMMAND_SIZE 4096u
 
 #define MAX_RECIPIENT_SIZE 256u
+#define DEFAULT_GEN_PASS_LEN 10u
 #define PASSMNG_DIR ".bearpswmng"
 
 char passmng_dir[PASSMNG_DIR_PATH_SIZE] = {0};
@@ -69,6 +71,7 @@ static const struct option long_options[] = {
   {"list", no_argument, 0, 'l'},
   {"show", required_argument, 0, 's'},
   {"add", required_argument, 0, 'a'},
+  {"generate", required_argument, 0, 'g'},
   {"help", no_argument, 0, 'h'},
   {0,0,0,0} /* Termination */
 };
@@ -86,6 +89,7 @@ static int add_entry(const char *group,
                       const char *recipient);
 static int show_entry(const size_t entry_index);
 static int show_all_entries();
+static void generate_password(const size_t pass_size);
 static int create_password_file(const char *file,
                                  const char *password
                                 );
@@ -130,6 +134,19 @@ int main(int argc, char **argv)
     case 's':
       show_entry(strtoul(optarg, NULL, 10));
       break;
+    case 'g': {
+      size_t pass_len = strtoul(optarg, NULL, 10);
+      if (pass_len >= DEFAULT_GEN_PASS_LEN) {
+        generate_password(pass_len);
+      }
+      else {
+        printf("Error: Password length should be greater than %u", DEFAULT_GEN_PASS_LEN);
+        print_usage(argv[0]);
+        cleanup();
+        exit(EXIT_FAILURE);
+      }
+      break;
+    }
     case 'a': {
       if (optind + 2 != argc) {
         printf("Error: --add option requires three additional arguments.\n");
@@ -182,10 +199,24 @@ void print_usage(const char *app) {
   printf("\n\n\t\t%s version %s\n\n", PROGRAM_NAME, VERSION);
   printf("Usage: %s [options]\n", app);
   printf("Options:\n");
-  printf("  --list                   List all entries\n");
-  printf("  --show <entry>           Show details of a specific entry\n");
-  printf("  --add <Group> <Domain> <Recipient> Add a new entry\n");
-  printf("  -h, --help               Print this help message\n");
+  printf("  --list                                  List all entries\n");
+  printf("  --generate <length>                     Generate password\n");
+  printf("  --show     <entry>                      Show details of a specific entry\n");
+  printf("  --add      <Group> <Domain> <Recipient> Add a new entry\n");
+  printf("  --help, -h                              Print this help message\n");
+}
+
+void generate_password(const size_t pass_size)
+{
+  size_t i = 0;
+  char list[] = "1234567890qwertyuiopasdfghjklzxcvbnm!@#$%^&*()_- +=QWERTYUIOPASDFGHJKLZXCVBNM[]{};:<>,.?|";
+  size_t list_len = strlen(list);
+  srand(time(NULL));
+  printf("Generated password: ");
+  for(i = 0; i < pass_size; i++) {
+    printf("%c", list[rand() % (list_len - 1)]);
+  }
+  printf("\n");
 }
 
 int show_all_entries()
