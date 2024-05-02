@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
   read_directory(passmng_dir);  
-  while ((option = getopt_long(argc, argv, "ls:a:h", long_options, NULL)) != -1) {
+  while ((option = getopt_long(argc, argv, "ls:a:g:h", long_options, NULL)) != -1) {
     switch (option) {
     case 'l':
       show_all_entries();
