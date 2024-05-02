@@ -311,6 +311,7 @@ int add_entry(const char *group,
   char *data = NULL;
   char line[MAX_LINE_LENGTH] = {0};
 
+    printf("Input data:\n");
   char *group_path = malloc((strlen(passmng_dir)+strlen(group)+2) * sizeof(char));
   if (group_path == NULL) {
     fprintf(stderr, "Could not allocate memory for the group %s path", group);
@@ -336,8 +337,8 @@ int add_entry(const char *group,
     free(file_path);
     return EXIT_FAILURE;
   }
-  memset(outfile, 0, (strlen(file_path)+strlen(".gpg")+2));
-  snprintf(outfile, (strlen(file_path)+strlen(".gpg")+2), "%s.gpg",file_path);
+  memset(outfile, 0, (strlen(group_path)+strlen(file)+strlen(".gpg")+2));
+  snprintf(outfile, (strlen(group_path)+strlen(file)+strlen(".gpg")+2), "%s.gpg",file_path);
 
   /* Create missing directories if needed */
   if (create_dir_if_missing(group_path) == EXIT_FAILURE) {
@@ -346,9 +347,9 @@ int add_entry(const char *group,
     free(outfile);
     return EXIT_FAILURE;
   }
-
-  printf("Input data:\n");
   size_t data_size = 0;
+
+
   while(fgets(line, MAX_LINE_LENGTH, stdin) != NULL) {
     char *ptr_line = realloc(data, (data_size+strlen(line)+1)*sizeof(char));
     if (ptr_line == NULL) {
