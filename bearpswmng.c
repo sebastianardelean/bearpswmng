@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <time.h>
+#include <math.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -91,7 +92,7 @@ static int add_entry(const char *group,
                      const char *recipient);
 static int show_entry(const size_t entry_index);
 static int show_all_entries();
-static void generate_password(const size_t pass_size);
+static int generate_password(const size_t pass_size);
 static int create_password_file(const char *file,
                                  const char *data
                                 );
@@ -102,6 +103,10 @@ static void encrypt_file(const char *infile,
 static void decrypt_file(const char *infile);
 
 static void cleanup();
+
+static size_t b64_encoded_length(size_t input_length);
+static void b64_encode(const char *in, size_t length, char *out);
+
 
 int main(int argc, char **argv)
 {
@@ -139,10 +144,13 @@ int main(int argc, char **argv)
     case 'g': {
       size_t pass_len = strtoul(optarg, NULL, 10);
       if (pass_len >= DEFAULT_GEN_PASS_LEN) {
-        generate_password(pass_len);
+        if (generate_password(pass_len)!= EXIT_SUCCESS) {
+          cleanup();
+          exit(EXIT_FAILURE);
+        }
       }
       else {
-        printf("Error: Password length should be greater than %u", DEFAULT_GEN_PASS_LEN);
+        fprintf(stderr, "Error: Password length should be greater than %u", DEFAULT_GEN_PASS_LEN);
         print_usage(argv[0]);
         cleanup();
         exit(EXIT_FAILURE);
@@ -206,22 +214,113 @@ void print_usage(const char *app) {
   printf("  --help, -h                              Print this help message\n");
 }
 
-void generate_password(const size_t pass_size)
+size_t b64_encoded_length(size_t input_length)
+{
+  size_t ret = 0;
+
+  ret = input_length;
+  if (input_length % 3 != 0) {
+     ret += 3 - (input_length % 3);
+  }
+   
+  ret /= 3;
+  ret *= 4;
+  
+  return ret;
+}
+
+void b64_encode(const char *in, size_t length, char *out)
+{
+  size_t  i;
+  size_t  j;
+  size_t  v;
+
+  const char b64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  
+  if (in == NULL || length == 0) {
+    return;
+  }
+   
+  for (i=0, j=0; i<length; i+=3, j+=4) {
+    v = in[i];
+    v = i+1 < length ? v << 8 | in[i+1] : v << 8;
+    v = i+2 < length ? v << 8 | in[i+2] : v << 8;
+    
+    out[j]   = b64chars[(v >> 18) & 0x3F];
+    out[j+1] = b64chars[(v >> 12) & 0x3F];
+    if (i+1 < length) {
+      out[j+2] = b64chars[(v >> 6) & 0x3F];
+    } else {
+      out[j+2] = '=';
+    }
+    if (i+2 < length) {
+      out[j+3] = b64chars[v & 0x3F];
+    } else {
+      out[j+3] = '=';
+    }
+  }
+}
+
+
+int generate_password(const size_t pass_size)
 {
   size_t i = 0;
-
-  char list[] = "1234567890qwertyuiopasdfghjklzxcvbnm~`! @#$%^&*()_-+={[}]|\\:;\"'<,>.?/QWERTYUIOPASDFGHJKLZXCVBNM";
-
+  const char special_chars[]=" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+  const char list[] = "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
 
   size_t list_len = strlen(list);
+  size_t special_chars_len = strlen(special_chars);
+
+
+  size_t b64_len = 0;
   struct timespec nanos;
   clock_gettime(CLOCK_MONOTONIC, &nanos);
   srand(nanos.tv_nsec);
-  printf("Generated password: ");
-  for(i = 0; i < pass_size; i++) {
-    printf("%c", list[rand() % (list_len - 1)]);
+
+ 
+  char *rand_chars = malloc(pass_size+1 * sizeof(char));
+  if (rand_chars == NULL) {
+    fprintf(stderr, "Could not allocate memory!\n");
+    return EXIT_FAILURE;
   }
-  printf("\n");
+  memset(rand_chars, 0, pass_size+1 * sizeof(char));
+  /*generate initial string*/
+  
+  for (i = 0; i < pass_size; i++) {
+    rand_chars[i] = list[rand() % (list_len - 1)];
+  }
+
+  b64_len = b64_encoded_length(strlen(rand_chars))+1;
+  
+  char *b64_pass = malloc(b64_len * sizeof(char));
+  if (b64_pass == NULL) {
+    fprintf(stderr, "Could not allocate memory!\n");
+    free(rand_chars);
+    return EXIT_FAILURE;
+  }
+  memset(b64_pass, 0, b64_len * sizeof(char));
+
+  b64_encode(rand_chars, strlen(rand_chars) , b64_pass);
+
+  size_t source_of_char = 0;
+
+  for (i = 0; i < pass_size; i++) {
+    source_of_char = rand() % 2 ;
+    if (source_of_char) {
+      rand_chars[i] = b64_pass[rand() % (b64_len - 1)];
+    }
+    else {
+      rand_chars[i] = special_chars[rand() % (special_chars_len - 1)];
+    }
+
+  }
+  
+  printf("%s", rand_chars);
+
+  free(rand_chars);
+  free(b64_pass);
+  return EXIT_SUCCESS;
+
 }
 
 int show_all_entries()
@@ -231,7 +330,6 @@ int show_all_entries()
   if (listed_entries == NULL) {
     return EXIT_FAILURE;
   }
-
   for (i = 0; i < listed_entries_size; i++) {
     if (strncmp(last_printed_group, listed_entries[i].group,strlen(listed_entries[i].group))!=0) {
       strncpy(last_printed_group, listed_entries[i].group,strlen(listed_entries[i].group));
