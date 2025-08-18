@@ -1,9 +1,16 @@
-# BEARPSWMNG - A password generator/manager command line tool
+## Commands
 
-## Installation
+Build under windows
+```
+cmake --build . --config Debug
 
-TBD
 
-## Usage
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake --build . --config Debug
 
-TBD
+
+cmake -B build .. -G "Visual Studio 17 2022"
+cmake --build build --clean-first --verbose
+```
+
+
