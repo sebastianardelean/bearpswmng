@@ -12,7 +12,12 @@ bool file_check_file_exists(const char *path, bool is_dir)
     }
 }
 
-int file_create_dif_if_missing(const char *path)
+int file_create_dir_if_missing(const char *path)
 {
-    
+    if (check_file_exists(path, true) == false) {
+        if(mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
+            return -1;
+        }
+    }
+    return 0;
 }
