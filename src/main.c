@@ -34,7 +34,7 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include "version.h"
-
+#include "trace.h"
 
 #define STR(s) #s
 #define XSTR(s) STR(s)
@@ -113,7 +113,16 @@ int main(int argc, char **argv)
   int option;
   struct passwd *pwd = NULL;
   
-  
+  trace_init_logger(LOG_FILE, LVL_LOG_TRACE, true);
+
+  int i = 0;
+  for (i = 0; i < 5; i++) {
+      LOG_TRACE("Working log %d", i);
+  }
+
+  trace_clean_logger();
+
+  /*
   if (argc == 1) {
     print_usage(argv[0]);
     exit(EXIT_SUCCESS);
@@ -127,11 +136,13 @@ int main(int argc, char **argv)
 
   snprintf(passmng_dir, PASSMNG_DIR_PATH_SIZE, "%s/%s",pwd->pw_dir,PASSMNG_DIR);
 
-  /* Create the directory if is missing */
+ 
   if (create_dir_if_missing(passmng_dir) == EXIT_FAILURE) {
     cleanup();
     exit(EXIT_FAILURE);
   }
+
+  
   read_directory(passmng_dir);  
   while ((option = getopt_long(argc, argv, "ls:a:g:h", long_options, NULL)) != -1) {
     switch (option) {
@@ -193,6 +204,7 @@ int main(int argc, char **argv)
 
   
   cleanup();
+  */
   exit(EXIT_SUCCESS);
 }
 

@@ -9,7 +9,7 @@ set(INCLUDE_FILES "../include"
 
 
 set(SOURCE_FILES main.c
-
+                 trace.c
 )
 
 
