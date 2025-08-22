@@ -92,7 +92,7 @@ fn main() -> io::Result<()>{
                 
             }
             else {
-                trace!("File {} already exists! Use update command", record_path.display());
+                trace!("Record {} doesn't exist.", record_name);
             }
             
             
