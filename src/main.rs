@@ -1,21 +1,21 @@
 mod cli;
 mod bearcrypto;
 mod file;
-use log::{info,trace,warn,error};
+use log::{trace,error};
 use log4rs;
 
-
+use std::io;
 use home;
-use std::path::{Path, PathBuf};
-
+use std::path::PathBuf;
+use std::io::{Write, BufRead};
 use clap::Parser;
 use cli::{CliArgs, Commands};
-
+use rand::Rng;
 
 
 use bearcrypto::{encrypt, decrypt};
-use file::{write_to_file,read_from_file,is_file_missing, create_directory_if_missing,read_dirs,is_directory_missing};
-
+use file::{write_to_file,read_from_file,is_file_missing, create_directory_if_missing,read_dirs};
+use base64::prelude::*;
 
 
 
@@ -151,7 +151,15 @@ fn main() -> io::Result<()>{
             }
             
            
+        },
+
+        Commands::Generate(arg) => {
+            let password_length: u16 = arg.length;
+            let password:String = generate_random_string(password_length.into());
+
+            trace!("The password is: {}", password);
         }
+           
         
     }
 
@@ -221,4 +229,32 @@ fn format_content(record_data: RecordData) -> String {
 
 
 
+fn generate_random_string(length: usize) -> String {
+    const CHARSET: &[u8] = b"1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
+    const SPECIAL_CHARSET: &[u8] = b" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+    let mut rng = rand::rng();
 
+    let rand_chars: String = (0..length)
+        .map(|_| {
+            let idx = rng.random_range(0..CHARSET.len());
+            CHARSET[idx] as char
+        })
+        .collect();
+
+
+    let b64_pass = BASE64_STANDARD.encode(rand_chars.as_bytes());
+    let mut final_pass:String = String::with_capacity(length);
+
+    for _ in 0..length {
+        let pick_b64 = rng.random_bool(0.5); // 50/50 chance
+        if pick_b64 {
+            let idx = rng.random_range(0..b64_pass.len());
+            final_pass.push(b64_pass.as_bytes()[idx] as char);
+        } else {
+            let idx = rng.random_range(0..SPECIAL_CHARSET.len());
+            final_pass.push(SPECIAL_CHARSET[idx] as char);
+        }
+    }
+
+    return final_pass;
+}
