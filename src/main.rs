@@ -226,7 +226,7 @@ fn format_content(record_data: RecordData) -> String {
             content.push_str(&format!("\t- {}\n", info));
         }
     }
-    content
+    return content;
 }
 
 

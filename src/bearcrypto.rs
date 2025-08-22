@@ -82,7 +82,7 @@ fn encrypt_core(
     // Append encrypted chunk to the output buffer
     dist.extend_from_slice(&output);
 
-    Ok(())
+    return Ok(());
 }
 
 fn decrypt_core (
@@ -98,7 +98,7 @@ fn decrypt_core (
 
     open(&key, &nonce, split.1.as_slice(), Some(split.0.as_slice()), &mut output).unwrap();
     dist.extend_from_slice(&output);
-    Ok(())
+    return Ok(());
 }
 
 
@@ -118,7 +118,7 @@ pub fn encrypt (
         encrypt_core(&mut ciphertext,src_chunk.to_vec(), &key, nonce)?;
         
     }
-    Ok(ciphertext)
+    return Ok(ciphertext);
 }
 
 pub fn decrypt(
@@ -136,5 +136,5 @@ pub fn decrypt(
         decrypt_core(&mut plaintext, chunk.to_vec(), &key, nonce)?;
     }
 
-    Ok(plaintext)
+    return Ok(plaintext);
 }

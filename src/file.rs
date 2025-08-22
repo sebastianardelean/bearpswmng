@@ -6,14 +6,14 @@ use std::path::{Path, PathBuf};
 pub fn write_to_file(file_path: &Path, data: &Vec<u8>) -> std::io::Result<()>{
     let mut file:File = File::create(file_path)?;
     file.write_all(data)?;
-    Ok(())
+    return Ok(());
 }
 
 
 pub fn read_from_file(file_path: &Path, data: &mut Vec<u8>) -> std::io::Result<()> {
     let mut file = File::open(file_path)?;
     file.read_to_end(data)?;
-    Ok(())
+    return Ok(());
 }
 
 
@@ -45,7 +45,7 @@ pub fn read_dirs(config_path: &Path) -> io::Result<Vec<PathBuf>>{
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()?;
     dir_entries.sort();
-    Ok(dir_entries)
+    return Ok(dir_entries);
 }
 
 pub fn is_directory_missing(dir_path: &Path) -> io::Result<bool> {
