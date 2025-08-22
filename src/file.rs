@@ -62,3 +62,12 @@ pub fn is_directory_missing(dir_path: &Path) -> io::Result<bool> {
         Err(e) => Err(e), //the real error
     }
 }
+
+pub fn extract_file_names(paths:Vec<PathBuf>) -> Vec<String> {
+    return paths
+        .into_iter()
+        .filter_map(|p| p.file_name()
+                    .and_then(|f| f.to_str())
+                    .map(|s| s.to_string()))
+        .collect();
+}
