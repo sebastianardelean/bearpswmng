@@ -1,20 +1,20 @@
 mod cli;
 mod bearcrypto;
 mod file;
-use log::{info,trace,warn,error};
+use log::{trace,error};
 use log4rs;
 
-use std::{fs,io};
+use std::io;
 use home;
-use std::path::{Path, PathBuf};
-use std::io::{Write, BufRead,Read};
+use std::path::PathBuf;
+use std::io::{Write, BufRead};
 use clap::Parser;
 use cli::{CliArgs, Commands};
 use rand::Rng;
 
 
 use bearcrypto::{encrypt, decrypt};
-use file::{write_to_file,read_from_file,is_file_missing, create_directory_if_missing,read_dirs,is_directory_missing};
+use file::{write_to_file,read_from_file,is_file_missing, create_directory_if_missing,read_dirs};
 use base64::prelude::*;
 
 

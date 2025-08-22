@@ -1,6 +1,6 @@
 use std::{fs,io};
 use std::fs::File;
-use std::io::{Write, BufRead,Read};
+use std::io::{Write,Read};
 use std::path::{Path, PathBuf};
 
 pub fn write_to_file(file_path: &Path, data: &Vec<u8>) -> std::io::Result<()>{

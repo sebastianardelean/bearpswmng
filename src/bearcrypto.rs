@@ -1,5 +1,4 @@
-use std::fs::{File, remove_file};
-use std::io::{Read,Write};
+use std::io::Write;
 
 use orion::hazardous::{
     aead::xchacha20poly1305::{seal, open, Nonce, SecretKey},
