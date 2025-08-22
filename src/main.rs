@@ -15,7 +15,7 @@ use rand::Rng;
 
 use bearcrypto::{encrypt, decrypt};
 use file::{write_to_file,read_from_file,is_file_missing, create_directory_if_missing,read_dirs,
-extract_file_names};
+extract_filenames};
 use base64::prelude::*;
 
 
@@ -61,8 +61,8 @@ fn main() -> io::Result<()>{
             trace!("Read directory {}", config_directory.display());
             match read_dirs(config_directory.as_path()) {
                 Ok(groups) => {
-                    let file_names:Vec<String> = extract_file_names(groups);
-                    for e in file_names {
+                    let filenames:Vec<String> = extract_filenames(groups);
+                    for e in filenames {
                         trace!("Entry: {}",e);
                     }
                 }
