@@ -1,4 +1,5 @@
 mod cli;
+mod bearcrypto;
 use log::{info,trace,warn,error};
 use log4rs;
 
@@ -7,9 +8,16 @@ use home;
 use std::path::{Path, PathBuf};
 use std::{fs,io};
 use std::fs::File;
-use std::io::{Write, BufRead};
+use std::io::{Write, BufRead,Read};
 use clap::Parser;
 use cli::{CliArgs, Commands};
+
+
+
+use bearcrypto::{encrypt_large_file, decrypt_large_file, encrypt_data,decrypt_data};
+
+
+
 
 
 const CONFIG_DIRECTORY_NAME: &str = ".bearpswmng";
@@ -19,6 +27,8 @@ struct RecordData {
     password: String,
     other_info: Vec<String>    
 }
+
+
 
 
 fn main() -> io::Result<()>{
@@ -61,13 +71,29 @@ fn main() -> io::Result<()>{
         },
 
         Commands::Show(arg) => {
-            let record_dir:PathBuf = config_directory.join(arg.name.clone());
-            trace!("Let's check if {} exists", record_dir.display());
-            match is_directory_missing(record_dir.as_path()) {
-                Ok(false) => trace!("Exists!"),
-                Ok(true) => trace!("Missing!"),
-                Err(e) => error!("Error {}!", e),
+            let record_name: &String = &arg.name;
+            let record_path: PathBuf = config_directory.join(record_name);
+
+            if !is_file_missing(record_path.as_path())? {
+                let mut buffer = Vec::new();
+                match read_from_file(record_path.as_path(), &mut buffer) {
+                    Ok(_) => {
+                        match decrypt_data(buffer,String::from("Something")) {
+                            Ok(plaintext) => trace!("Done: {}!", String::from_utf8(plaintext.clone()).unwrap()),
+                            Err(e) =>error!("Error {}",e),
+                        }
+                    },
+                    Err(e) => error!("Error {}",e)
+                }
+                
+               
+                
+                
             }
+            else {
+                trace!("File {} already exists! Use update command", record_path.display());
+            }
+            
             
         },
 
@@ -81,11 +107,19 @@ fn main() -> io::Result<()>{
 
                 let formatted_data:String = format_content(record_data);
            
-                match write_to_file(record_path.as_path(), formatted_data.as_bytes()) {
-                    Ok(_) => trace!("Successfully saved data to file!"),
+                
+
+                match encrypt_data(formatted_data.as_bytes().to_vec(),String::from("Something")) {
+                    Ok(ciphertext) => {
+                        match write_to_file(record_path.as_path(), &ciphertext) {
+                            Ok(_) => trace!("Successfully saved data to file!"),
+                            Err(e) =>error!("Error {}",e),
+                        }
+                    }
                     Err(e) =>error!("Error {}",e),
                 }
-                //now encrypt it
+
+                
             }
             else {
                 trace!("File {} already exists! Use update command", record_path.display());
@@ -104,7 +138,7 @@ fn main() -> io::Result<()>{
 
                 let formatted_data:String = format_content(record_data);
            
-                match write_to_file(record_path.as_path(), formatted_data.as_bytes()) {
+                match write_to_file(record_path.as_path(), &formatted_data.as_bytes().to_vec()) {
                     Ok(_) => trace!("Successfully saved data to file!"),
                     Err(e) =>error!("Error {}",e),
                 }
@@ -258,7 +292,7 @@ fn format_content(record_data: RecordData) -> String {
     content
 }
 
-fn write_to_file(file_path: &Path, data: &[u8]) -> std::io::Result<()>{
+fn write_to_file(file_path: &Path, data: &Vec<u8>) -> std::io::Result<()>{
     let mut file:File = File::create(file_path)?;
 
    
@@ -273,3 +307,13 @@ fn write_to_file(file_path: &Path, data: &[u8]) -> std::io::Result<()>{
     };
     Ok(())
 }
+
+
+fn read_from_file(file_path: &Path, data: &mut Vec<u8>) -> std::io::Result<()> {
+    let mut file = File::open(file_path)?;
+    file.read_to_end(data)?;
+    Ok(())
+}
+
+//fn encrypt_with_password(data:Vec<u8>, password: &str) -> io::Result<()> {
+//}
