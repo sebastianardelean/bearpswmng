@@ -21,6 +21,9 @@ pub enum Commands {
 
     ///Add a record
     Add(AddRecordArg),
+
+    ///Update a record
+    Update(AddRecordArg),
 }
 
 
@@ -37,3 +40,4 @@ pub struct AddRecordArg {
     #[arg(name = "name", help = "Name of the record.")]
     pub name: String,
 }
+
