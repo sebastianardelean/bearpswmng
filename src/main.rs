@@ -1,21 +1,20 @@
 mod cli;
 mod bearcrypto;
+mod file;
 use log::{info,trace,warn,error};
 use log4rs;
 
 
 use home;
 use std::path::{Path, PathBuf};
-use std::{fs,io};
-use std::fs::File;
-use std::io::{Write, BufRead,Read};
+
 use clap::Parser;
 use cli::{CliArgs, Commands};
 
 
 
-use bearcrypto::{encrypt_large_file, decrypt_large_file, encrypt_data,decrypt_data};
-
+use bearcrypto::{encrypt, decrypt};
+use file::{write_to_file,read_from_file,is_file_missing, create_directory_if_missing,read_dirs,is_directory_missing};
 
 
 
@@ -74,11 +73,13 @@ fn main() -> io::Result<()>{
             let record_name: &String = &arg.name;
             let record_path: PathBuf = config_directory.join(record_name);
 
+
+            
             if !is_file_missing(record_path.as_path())? {
                 let mut buffer = Vec::new();
                 match read_from_file(record_path.as_path(), &mut buffer) {
                     Ok(_) => {
-                        match decrypt_data(buffer,String::from("Something")) {
+                        match decrypt(buffer, arg.password.clone()) {
                             Ok(plaintext) => trace!("Done: {}!", String::from_utf8(plaintext.clone()).unwrap()),
                             Err(e) =>error!("Error {}",e),
                         }
@@ -101,6 +102,7 @@ fn main() -> io::Result<()>{
             let record_name: &String = &arg.name;
             let record_path: PathBuf = config_directory.join(record_name);
 
+            
             if is_file_missing(record_path.as_path())? {
                 trace!("Add record {}; Jump to interactive mode", record_name);
                 let record_data: RecordData = run_interactive()?;
@@ -109,7 +111,7 @@ fn main() -> io::Result<()>{
            
                 
 
-                match encrypt_data(formatted_data.as_bytes().to_vec(),String::from("Something")) {
+                match encrypt(formatted_data.as_bytes().to_vec(),arg.password.clone()) {
                     Ok(ciphertext) => {
                         match write_to_file(record_path.as_path(), &ciphertext) {
                             Ok(_) => trace!("Successfully saved data to file!"),
@@ -153,24 +155,7 @@ fn main() -> io::Result<()>{
         
     }
 
-    
-
-
     Ok(())
-
-
-
-   
-
-
-
-  
-
-
-
-
-
-
     
 }
 
@@ -218,66 +203,8 @@ fn run_interactive() -> io::Result<RecordData> {
 
 }
 
-fn is_directory_missing(dir_path: &Path) -> io::Result<bool> {
-    match fs::metadata(dir_path) {
-        Ok(meta) => {
-            if meta.is_dir() {
-                Ok(false)
-            }
-            else {
-                Ok(true)
-            }
-        },
-        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(true),
-        Err(e) => Err(e), //the real error
-    }
-}
 
-fn is_file_missing(file_path: &Path) -> io::Result<bool> {
-    match fs::metadata(file_path) {
-        Ok(meta) => {
-            if meta.is_file() {
-                Ok(false) //file exists
-            }
-            else {
-                Ok(true) //path exists but no file!
-            }
-        },
-        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(true),//file doesn't exist
-        Err(e) => Err(e), //other error
-    }
-}
 
-fn create_directory_if_missing(home_path:&Path){
-    match is_directory_missing(home_path) {
-        Ok(false) => trace!("Directory {} already exists!", home_path.display()),
-        Ok(true) => {
-            trace!("Try to create directory {}", home_path.display());
-            match fs::create_dir(home_path) {
-                Ok(_) => {
-                    trace!("Directory {} created successfully", home_path.display());
-                    
-                }
-                Err(e) => {
-                    error!("Error creating directory {}", e);
-                    
-                }
-            }
-
-        },
-        Err(e) => error!("Error checking if directory is missing: {}",e),
-    }
-    
-
-}
-
-fn read_dirs(config_path: &Path) -> io::Result<Vec<PathBuf>>{
-     let mut dir_entries = fs::read_dir(config_path)?
-        .map(|res| res.map(|e| e.path()))
-        .collect::<Result<Vec<_>, io::Error>>()?;
-    dir_entries.sort();
-    Ok(dir_entries)
-}
 
 
 fn format_content(record_data: RecordData) -> String {
@@ -292,28 +219,6 @@ fn format_content(record_data: RecordData) -> String {
     content
 }
 
-fn write_to_file(file_path: &Path, data: &Vec<u8>) -> std::io::Result<()>{
-    let mut file:File = File::create(file_path)?;
-
-   
-    match file.write_all(data) {
-        Ok(_) => {
-            trace!("Successfully created file {}!", file_path.display());
-        }
-        Err(e) => {
-            error!("Error on writing file: {}", e);
-            return Err(e);
-        }
-    };
-    Ok(())
-}
 
 
-fn read_from_file(file_path: &Path, data: &mut Vec<u8>) -> std::io::Result<()> {
-    let mut file = File::open(file_path)?;
-    file.read_to_end(data)?;
-    Ok(())
-}
 
-//fn encrypt_with_password(data:Vec<u8>, password: &str) -> io::Result<()> {
-//}

@@ -31,6 +31,8 @@ pub enum Commands {
 pub struct ShowRecordArg {
     #[arg(name = "name", help = " Name of the record.")]
     pub name: String,
+    #[arg(name = "password" , help = "Password use to encrypt/decrypt.")]
+    pub password: String,
 }
 
 
@@ -39,5 +41,8 @@ pub struct AddRecordArg {
 
     #[arg(name = "name", help = "Name of the record.")]
     pub name: String,
+
+    #[arg(name = "password" , help = "Password use to encrypt/decrypt.")]
+    pub password: String,
 }
 

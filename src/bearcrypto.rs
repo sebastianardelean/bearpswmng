@@ -13,11 +13,11 @@ use rand::rand_core::{TryRngCore, OsRng};
 
 
 
-const CHUNK_SIZE: usize = 128; // The size of the chunks you wish to split the stream into.
+const CHUNK_SIZE: usize = 128; 
 
 fn get_random(dest: &mut [u8]) {
     OsRng.try_fill_bytes(dest).unwrap();
-    //RngCore::fill_bytes(&mut OsRng, dest);
+
 }
 
 fn nonce() -> Vec<u8> {
@@ -50,88 +50,9 @@ fn create_key(password: String, nonce: Vec<u8>) -> SecretKey {
 }
 
 
+
+
 fn encrypt_core(
-    dist: &mut File,
-    contents: Vec<u8>,
-    key: &SecretKey,
-    nonce: Nonce,
-) {
-    let ad = auth_tag();
-    let output_len = match contents.len().checked_add(POLY1305_OUTSIZE + ad.len()) {
-        Some(min_output_len) => min_output_len,
-        None => panic!("Plaintext is too long"),
-    };
-
-    let mut output = vec![0u8; output_len];
-    output[..CHACHA_KEYSIZE].copy_from_slice(ad.as_ref());
-    seal(&key, &nonce, contents.as_slice(), Some(ad.clone().as_slice()), &mut output[CHACHA_KEYSIZE..]).unwrap();
-    dist.write(&output.as_slice()).unwrap();
-}
-
-fn decrypt_core(
-    dist: &mut File,
-    contents: Vec<u8>,
-    key: &SecretKey,
-    nonce: Nonce
-) {
-    let split = simple_split_encrypted(contents.as_slice());
-    let mut output = vec![0u8; split.1.len() - POLY1305_OUTSIZE];
-
-    open(&key, &nonce, split.1.as_slice(), Some(split.0.as_slice()), &mut output).unwrap();
-    dist.write(&output.as_slice()).unwrap();
-}
-
-
-pub fn encrypt_large_file(
-    file_path: &str,
-    output_path: &str,
-    password: String
-) -> Result<(), orion::errors::UnknownCryptoError> {
-    let mut source_file = File::open(file_path).expect("Failed to open input file");
-    let mut dist = File::create(output_path).expect("Failed to create output file");
-
-    let mut src = Vec::new();
-    source_file.read_to_end(&mut src).expect("Failed to read input file");
-
-    let nonce = nonce();
-
-    dist.write(nonce.as_slice()).unwrap();
-    let key = create_key(password, nonce.clone());
-    let nonce = Nonce::from_slice(nonce.as_slice()).unwrap();
-
-    for (n_chunk, src_chunk) in src.chunks(CHUNK_SIZE).enumerate() {
-        encrypt_core(&mut dist, src_chunk.to_vec(), &key, nonce)
-    }
-
-    Ok(())
-}
-
-pub fn decrypt_large_file(
-    file_path: &str, 
-    output_path: &str,
-    password: String
-) -> Result<(), orion::errors::UnknownCryptoError> {
-    let mut input_file = File::open(file_path).expect("Failed to open input file");
-    let mut output_file = File::create(output_path).expect("Failed to create output file");
-
-    let mut src: Vec<u8> = Vec::new();
-    input_file.read_to_end(&mut src).expect("Failed to read input file");
-
-    let nonce = src[..XCHACHA_NONCESIZE].to_vec();
-
-    src = src[XCHACHA_NONCESIZE..].to_vec();
-
-    let key = create_key(password, nonce.clone());
-    let nonce = Nonce::from_slice(nonce.as_slice()).unwrap();
-
-    for (n_chunk, src_chunk) in src.chunks(CHUNK_SIZE + CHACHA_KEYSIZE + POLY1305_OUTSIZE).enumerate() {
-        decrypt_core(&mut output_file, src_chunk.to_vec(), &key, nonce);
-    }
-
-    Ok(())
-}
-
-fn encrypt_core_text(
     dist: &mut Vec<u8>,      // output buffer instead of File
     contents: Vec<u8>,
     key: &SecretKey,
@@ -165,7 +86,7 @@ fn encrypt_core_text(
     Ok(())
 }
 
-fn decrypt_core_text (
+fn decrypt_core (
     dist: &mut Vec<u8>,       // output buffer
     contents: Vec<u8>,    // encrypted chunk
     key: &SecretKey,
@@ -184,7 +105,7 @@ fn decrypt_core_text (
 }
 
 
-pub fn encrypt_data (
+pub fn encrypt (
     plaintext: Vec<u8>,
     password: String
 ) -> Result<Vec<u8>, orion::errors::UnknownCryptoError> {
@@ -197,13 +118,13 @@ pub fn encrypt_data (
     let nonce = Nonce::from_slice(nonce.as_slice()).unwrap();
 
     for src_chunk in plaintext.chunks(CHUNK_SIZE) {
-        encrypt_core_text(&mut ciphertext,src_chunk.to_vec(), &key, nonce)?;
+        encrypt_core(&mut ciphertext,src_chunk.to_vec(), &key, nonce)?;
         
     }
     Ok(ciphertext)
 }
 
-pub fn decrypt_data(
+pub fn decrypt(
     ciphertext: Vec<u8>,
     password: String,
 ) -> Result<Vec<u8>, orion::errors::UnknownCryptoError> {
@@ -215,7 +136,7 @@ pub fn decrypt_data(
     let mut plaintext = Vec::new();
 
     for chunk in ciphertext_body.chunks(CHUNK_SIZE + CHACHA_KEYSIZE + POLY1305_OUTSIZE) {
-        decrypt_core_text(&mut plaintext, chunk.to_vec(), &key, nonce)?;
+        decrypt_core(&mut plaintext, chunk.to_vec(), &key, nonce)?;
     }
 
     Ok(plaintext)
