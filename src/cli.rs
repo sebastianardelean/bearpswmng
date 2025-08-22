@@ -24,6 +24,9 @@ pub enum Commands {
 
     ///Update a record
     Update(AddRecordArg),
+
+    ///Generate password
+    Generate(GenerateRecordArg),
 }
 
 
@@ -46,3 +49,9 @@ pub struct AddRecordArg {
     pub password: String,
 }
 
+
+#[derive(Args)]
+pub struct GenerateRecordArg {
+    #[arg(name ="length", help = "Password length.")]
+    pub length: u16,
+}

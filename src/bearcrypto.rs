@@ -92,9 +92,7 @@ fn decrypt_core (
     key: &SecretKey,
     nonce: Nonce,
 ) -> Result<(), orion::errors::UnknownCryptoError> {
-    let ad = auth_tag();
-
-
+    
     let split = simple_split_encrypted(contents.as_slice());
 
     let mut output = vec![0u8; split.1.len() - POLY1305_OUTSIZE];
