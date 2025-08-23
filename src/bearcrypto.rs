@@ -41,10 +41,10 @@ fn simple_split_encrypted(cipher_text: &[u8]) -> (Vec<u8>, Vec<u8>) {
 
 
 fn create_key(password: String, nonce: Vec<u8>) -> SecretKey {
-    let password = Password::from_slice(password.as_bytes()).unwrap();
-    let salt = Salt::from_slice(nonce.as_slice()).unwrap();
+    let password: Password = Password::from_slice(password.as_bytes()).unwrap();
+    let salt: Salt = Salt::from_slice(nonce.as_slice()).unwrap();
     let kdf_key = derive_key(&password, &salt, 15, 1024, CHACHA_KEYSIZE as u32).unwrap();
-    let key = SecretKey::from_slice(kdf_key.unprotected_as_bytes()).unwrap();
+    let key: SecretKey = SecretKey::from_slice(kdf_key.unprotected_as_bytes()).unwrap();
     return key;
 }
 
@@ -57,7 +57,7 @@ fn encrypt_core(
     key: &SecretKey,
     nonce: Nonce,
 ) -> Result<(), orion::errors::UnknownCryptoError> {
-    let ad = auth_tag();
+    let ad:Vec<u8> = auth_tag();
 
     // Compute the total output length
     let output_len = contents
@@ -92,7 +92,7 @@ fn decrypt_core (
     nonce: Nonce,
 ) -> Result<(), orion::errors::UnknownCryptoError> {
     
-    let split = simple_split_encrypted(contents.as_slice());
+    let split: (Vec<u8>, Vec<u8>) = simple_split_encrypted(contents.as_slice());
 
     let mut output = vec![0u8; split.1.len() - POLY1305_OUTSIZE];
 
@@ -108,11 +108,11 @@ pub fn encrypt (
 ) -> Result<Vec<u8>, orion::errors::UnknownCryptoError> {
 
     let mut ciphertext: Vec<u8> = Vec::new();
-    let nonce = nonce();
+    let nonce:Vec<u8> = nonce();
     ciphertext.write_all(nonce.as_slice()).unwrap();
 
-    let key = create_key(password, nonce.clone());
-    let nonce = Nonce::from_slice(nonce.as_slice()).unwrap();
+    let key: SecretKey = create_key(password, nonce.clone());
+    let nonce: Nonce = Nonce::from_slice(nonce.as_slice()).unwrap();
 
     for src_chunk in plaintext.chunks(CHUNK_SIZE) {
         encrypt_core(&mut ciphertext,src_chunk.to_vec(), &key, nonce)?;
@@ -125,12 +125,12 @@ pub fn decrypt(
     ciphertext: Vec<u8>,
     password: String,
 ) -> Result<Vec<u8>, orion::errors::UnknownCryptoError> {
-    let nonce_bytes = &ciphertext[..XCHACHA_NONCESIZE];
+    let nonce_bytes: &[u8] = &ciphertext[..XCHACHA_NONCESIZE];
     let ciphertext_body = &ciphertext[XCHACHA_NONCESIZE..];
-    let nonce = Nonce::from_slice(nonce_bytes).unwrap();
-    let key = create_key(password, nonce_bytes.to_vec());
+    let nonce: Nonce = Nonce::from_slice(nonce_bytes).unwrap();
+    let key: SecretKey = create_key(password, nonce_bytes.to_vec());
 
-    let mut plaintext = Vec::new();
+    let mut plaintext:Vec<u8> = Vec::new();
 
     for chunk in ciphertext_body.chunks(CHUNK_SIZE + CHACHA_KEYSIZE + POLY1305_OUTSIZE) {
         decrypt_core(&mut plaintext, chunk.to_vec(), &key, nonce)?;
