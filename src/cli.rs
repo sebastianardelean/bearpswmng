@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand};
 
-/// Simple program to greet a person
+/// Password saver
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 #[command(propagate_version = true)]

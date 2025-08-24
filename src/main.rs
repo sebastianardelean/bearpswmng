@@ -63,7 +63,7 @@ fn main() -> io::Result<()>{
                 Ok(groups) => {
                     let filenames:Vec<String> = extract_filenames(groups);
                     for e in filenames {
-                        trace!("Entry: {}",e);
+                        println!("* {}",e);
                     }
                 }
                 Err(e) => error!("Error reading directories: {}",e)
@@ -82,7 +82,7 @@ fn main() -> io::Result<()>{
                 match read_from_file(record_path.as_path(), &mut buffer) {
                     Ok(_) => {
                         match decrypt(buffer, arg.password.clone()) {
-                            Ok(plaintext) => trace!("Done: {}!", String::from_utf8(plaintext.clone()).unwrap()),
+                            Ok(plaintext) => print!("Content: \n{}!", String::from_utf8(plaintext.clone()).unwrap()),
                             Err(e) =>error!("Error {}",e),
                         }
                     },
@@ -94,7 +94,7 @@ fn main() -> io::Result<()>{
                 
             }
             else {
-                trace!("Record {} doesn't exist.", record_name);
+                print!("Record {} doesn't exist.", record_name);
             }
             
             
@@ -116,7 +116,7 @@ fn main() -> io::Result<()>{
                 match encrypt(formatted_data.as_bytes().to_vec(),arg.password.clone()) {
                     Ok(ciphertext) => {
                         match write_to_file(record_path.as_path(), &ciphertext) {
-                            Ok(_) => trace!("Successfully saved data to file!"),
+                            Ok(_) => print!("Successfully saved!"),
                             Err(e) =>error!("Error {}",e),
                         }
                     }
@@ -126,7 +126,7 @@ fn main() -> io::Result<()>{
                 
             }
             else {
-                trace!("File {} already exists! Use update command", record_path.display());
+                print!("File {} already exists! Use update command", record_path.display());
             }
             
            
@@ -141,15 +141,21 @@ fn main() -> io::Result<()>{
                 let record_data: RecordData = run_interactive()?;
 
                 let formatted_data:String = format_content(record_data);
-           
-                match write_to_file(record_path.as_path(), &formatted_data.as_bytes().to_vec()) {
-                    Ok(_) => trace!("Successfully saved data to file!"),
+
+                match encrypt(formatted_data.as_bytes().to_vec(),arg.password.clone()) {
+                    Ok(ciphertext) => {
+                        match write_to_file(record_path.as_path(), &ciphertext) {
+                            Ok(_) => print!("Successfully saved!"),
+                            Err(e) =>error!("Error {}",e),
+                        }
+                    }
                     Err(e) =>error!("Error {}",e),
                 }
-                //now encrypt it
+           
+
             }
             else {
-                trace!("File {} doesn't exists! Use add command", record_path.display());
+                print!("File {} already exists! Use update command", record_path.display());
             }
             
            
@@ -159,7 +165,7 @@ fn main() -> io::Result<()>{
             let password_length: u16 = arg.length;
             let password:String = generate_random_string(password_length.into());
 
-            trace!("The password is: {}", password);
+            print!("The password is: {}", password);
         }
            
         

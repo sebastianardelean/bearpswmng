@@ -20,15 +20,15 @@ appenders:
     encoder:
       pattern: "{d} [{f}:{L}] {m}{n}"
 root:
-  level: trace
+  level: warn
   appenders:
     - stdout
     - requests
 loggers:
   app::backend::db:
-    level: trace
+    level: warn
   app::requests:
-    level: trace
+    level: warn
     appenders:
       - requests
     additive: true
