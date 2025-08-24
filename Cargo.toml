@@ -1,7 +1,8 @@
 [package]
 name = "bearpswmng"
-version = "0.1.0"
-edition = "2021"
+version = "2.0.0"
+edition = "2024"
+description = "A password management tool."
 
 [dependencies]
 log = "0.4.27"
@@ -14,3 +15,13 @@ base64 = "0.22.1"
 
 
 rand_core = { version = "=0.9.3", features = ["os_rng"]}
+
+
+[package.metadata.deb]
+maintainer = "Sebastian Ardelean <ardeleanasm@gmail.com>"
+copyright = "2025, Sebastian Ardelean"
+license-file = ["LICENSE"]
+assets = [
+	["target/release/bearpswmng", "usr/local/bin/", "755"],
+#    ["config/log4rs.yaml", "etc/bearpswmng/", "644"],
+]

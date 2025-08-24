@@ -33,8 +33,9 @@ struct RecordData {
 
 fn main() -> io::Result<()>{
 
-    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
+//    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
 
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     trace!("Trying to get the home directory!");
 
     let home_directory: PathBuf =
